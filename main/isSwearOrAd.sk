@@ -1,0 +1,27 @@
+#Swear detection integration
+# on load:
+# 	set {-swearWords::*} to file contents of "plugins/chatfilter/kufur.txt"
+# 	set {-adWords::*} to file contents of "plugins/chatfilter/reklam.txt"
+
+
+function isSwearOrAd(message:string) :: boolean:
+	set {_messageSplit::*} to {_message} split by " "
+
+	loop {-swearWords::*}:
+		{_messageSplit::*} contains loop-value
+		return true
+
+	#Remove spaces
+	set {_messageWithoutSpace} to {_message}
+	replace all " " in {_messageWithoutSpace} with ""
+
+	#Test if it contains a domain
+	loop {-adWords::*}:
+		{_messageWithoutSpace} contains loop-value
+		return true
+
+	#Regex Filter (didn't work as intended - currently removed.)
+	#if ({_messageWithoutSpace}.toLowerCase()) matches "^[a-zA-Z0-9\-\.]+\.(com|org|net|xyz|tc|gg|me|host|fun|tr|dev|tk|ml|ga)":
+		#return true
+	
+	return false

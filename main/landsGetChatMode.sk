@@ -1,0 +1,19 @@
+#-------Integration with lands land.chat----
+#If you have lands installed, clear comments.
+
+# import:
+# 	ch.njol.skript.Skript
+# 	me.angeschossen.lands.api.LandsIntegration
+# 	me.angeschossen.lands.api.player.chat.ChatMode
+
+function getLandChatMode(p: offlineplayer) :: boolean:
+
+# 	set {_api} to LandsIntegration.of(Skript.getInstance())
+# 	set {_landsPlayer} to {_api}.getLandPlayer({_p}.getUniqueId())
+# 	set {_chatMode} to {_landsPlayer}.getChatMode()
+
+
+# 	if {_chatMode} is (ChatMode.LAND) or (ChatMode.NATION):
+# 		return true
+		
+	return false

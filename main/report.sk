@@ -1,0 +1,176 @@
+
+#DB Connection Credentials
+
+options:
+	host: localhost
+	port: 3306
+	dbname: bpdata
+	user: root
+	#pass: 123456 Type your dbpass
+
+	tag: &7[&6B&eP&7] #Tag for skript messages
+
+
+#DB Connection Handler
+on load:
+	#set {conn_BPDATA} to the database "mysql://{@host}:{@port}/{@dbname}?user={@user}&password={@pass}&useSSL=false"
+	set {conn_BPDATA} to the database "mysql://{@host}:{@port}/{@dbname}?user={@user}&password=&useSSL=false"
+
+
+command /report [<string>] [<string>]:
+	aliases: /rapor
+	trigger:
+		if arg-1 is "message":
+			handleMessageReport(arg-2, player)
+		if arg-1 is "read" or "oku":
+			player has permission "sk.read.reports"
+			if arg-2 is not set:
+				openReportsViewer(player, 1)
+			else if arg-2 is "1":
+				openReportsViewer(player, 1, "punishableOnly")
+			else if arg-2 is "0":
+				openReportsViewer(player, 1, "rejectedOnly")
+
+
+#---------------------- Reporting Message GUI for Players (Fired GUI When Clicked On A Chat Message)
+
+function handleMessageReport(hash:string, p:player) :: string:
+	execute unsafe "SELECT * FROM bp_chat_history WHERE hash = '%{_hash}%'" in {conn_BPDATA} and store the result in {_message::*}
+	if {_message::id::*} is set:
+		execute unsafe "SELECT * FROM bp_chat_reports WHERE hash = '%{_hash}%'" in {conn_BPDATA} and store the result in {_isAlreadyReported::*}
+		if {_isAlreadyReported::id::*} is set:
+			send "{@tag} &cBu mesaj zaten raporlanmış!" to {_p}
+		else:			
+			add "&e• &fOyuncu: &7%{_message::sender::1}%" to {_reportInfo::*}
+			add "&r   " to {_reportInfo::*}
+			add "&e• &fMesaj: %wrap({_message::message::1}, 25, "&7")%" to {_reportInfo::*}
+			create a gui with virtual chest inventory with 5 row named "&4Rapor Gönder" with shape "---------" and "----p----" and "---------" and "---y-n---" and "---------":
+				format gui slot "-" to black stained glass pane with all flags hidden named "&r"
+				format gui slot "p" to paper with all flags hidden named "&3Rapor Bilgileri:" with lore {_reportInfo::*}
+				format gui slot "y" to lime terracotta with all flags hidden named "&aRaporla" with lore "%wrap("Gereksiz rapor gönderen oyuncular &ccezalandırılır!", 20 ,"&7")%":
+					close {_p}'s inventory
+					execute unsafe "INSERT INTO bp_chat_reports (sender, message, hash, reporter) VALUES ('%{_message::sender::1}%','%{_message::message::1}%', '%{_message::hash::1}%', '%{_p}%')" in {conn_BPDATA}
+					send "{@tag} &aMesaj başarıyla raporlandı!" to {_p}
+				format gui slot "n" to red terracotta with all flags hidden named "&cİptal Et":
+					close {_p}'s inventory
+					send "{@tag} &cRaporlama iptal edildi." to {_p}
+			open last gui to {_p}
+			
+
+	else:
+		send "{@tag} &cMesajlar, üzerinden on dakika geçtikten sonra raporlanamazlar." to {_p}
+
+
+#---------------------All Reports by Player GUI (paginated) (cmd: /report read) -----------------
+
+function openReportsViewer(p:player, page:number, type:string = "all"):
+	set {_guiName} to "&4Gönderilen Raporlar"
+	if {_p} has permission "sk.decide.reports":
+		if {_type} is "all":
+			execute "SELECT * FROM bp_chat_reports WHERE decision IS NULL ORDER BY bp_chat_reports.report_date ASC" in {conn_BPDATA} and store the result in {_chatReports::*}
+			set {_guiName} to "&1Tüm Aktif Raporlar"
+		else if {_type} is "punishableOnly":
+			execute "SELECT * FROM bp_chat_reports WHERE decision IS NULL AND is_punishable = '1' ORDER BY bp_chat_reports.report_date ASC" in {conn_BPDATA} and store the result in {_chatReports::*}
+			set {_guiName} to "&2Cezalandırılmalı"
+		else if {_type} is "rejectedOnly":
+			execute "SELECT * FROM bp_chat_reports WHERE decision IS NULL AND is_punishable = '0' ORDER BY bp_chat_reports.report_date ASC" in {conn_BPDATA} and store the result in {_chatReports::*}
+			set {_guiName} to "&4Yanlış Raporlama"
+	else: 
+		execute "SELECT * FROM bp_chat_reports WHERE status = '0' ORDER BY bp_chat_reports.report_date ASC" in {conn_BPDATA} and store the result in {_chatReports::*}
+	create a gui with virtual chest inventory with 6 row named {_guiName}:
+		set {_reportAmount} to size of {_chatReports::id::*}
+
+		set {_firstElement} to (45 * ({_page}-1) + 1)
+		set {_lastElement} to (45 * {_page})
+
+		if {_reportAmount} < {_lastElement}:
+			set {_lastElement} to {_reportAmount}
+
+		set {_currentReport} to {_firstElement}
+		set {_currentPageReportAmountToBeShown} to ({_lastElement} - {_firstElement} + 1)
+
+		loop {_currentPageReportAmountToBeShown} times:
+			delete {_reportInfo::*}
+			add "&e• &7Raporlanan Mesaj:" to {_reportInfo::*}
+			add "%wrap({_chatReports::message::%{_currentReport}%}, 20, "&f")%" to {_reportInfo::*}
+			add "&r " to {_reportInfo::*}
+			add "&3İşlem yapmak için tıkla." to {_reportInfo::*}
+			format gui slot (loop-value - 1) to dirt with all flags hidden named "&cRapor No: &f%{_chatReports::id::%{_currentReport}%}%" with lore {_reportInfo::*}:
+				handleReport({_p}, {_chatReports::id::%{_currentReport}%})
+			add 1 to {_currentReport}
+
+		if {_page} > 1:
+			format gui slot 45 to arrow with all flags hidden named "&bÖnceki Sayfa":
+				wait a tick
+				openReportsViewer({_p}, ({_page} - 1))
+
+		if {_currentPageReportAmountToBeShown} = 45:
+			format gui slot 53 to arrow with all flags hidden named "&bSonraki Sayfa":
+				wait a tick
+				openReportsViewer({_p}, ({_page} + 1))
+	if {_reportAmount} is 0:
+		send "{@tag} &aİyi haber! Hiç rapor yok :)" to {_p}
+	else:
+		open last gui to {_p}
+
+
+
+#------------------- A Single Report Review GUI (shows selected report from all reports) -------------------
+
+function handleReport(p:player, reportId:number):
+	execute unsafe "SELECT * FROM bp_chat_reports WHERE id = '%{_reportId}%'" in {conn_BPDATA} and store the result in {_report::*}
+	if {_report::id::*} is set:
+		if {_p} has permission "sk.decide.reports":
+			add "&e• &7İnceleyen: &f%{_report::reviewer::1}%" to {_reportInfo::*}
+			add "&e• &7Raporlayan: &f%{_report::reporter::1}%" to {_reportInfo::*}
+			add "&e• &7Oyuncu: &f%{_report::sender::1}%" to {_reportInfo::*}
+		add "&e• &7Mesaj: %wrap({_report::message::1}, 25, "&f")%" to {_reportInfo::*}
+		create a gui with virtual chest inventory with 6 row named "&4Karar Ver" with shape "---------" and "----p----" and "---------" and "---y-n---" and "---------" and "----g----":
+			format gui slot "-" to black stained glass pane with all flags hidden named "&r"
+			format gui slot "p" to paper with all flags hidden named "&3Rapor Bilgileri:" with lore {_reportInfo::*}
+			format gui slot "y" to lime terracotta with all flags hidden named "&aCeza Verilmeli" with lore "%wrap("Bu konuşma BalPorsuk kurallarına UYGUN DEĞİLDİR.", 20 ,"&7")%":
+				handleReportReview({_p}, {_reportId}, 1)
+			format gui slot "n" to red terracotta with all flags hidden named "&cYanlış Raporlama" with lore "%wrap("Bu konuşma BalPorsuk kurallarına UYGUNDUR.", 20 ,"&7")%":
+				handleReportReview({_p}, {_reportId}, 0)
+			format gui slot "g" to barrier with all flags hidden named "&cGeri":
+				openReportsViewer({_p}, 1)
+		open last gui to {_p}
+	else:
+		send "{@tag} &cBu rapor silinmiş ya da başkası tarafından işlenmiş olabilir." to {_p} 
+
+
+#------------------- Handle Report Review Gui Decision ( Punish / Reject ) -------------------
+
+
+function handleReportReview(p:player, reportId:number, decision:number):
+	close {_p}'s inventory
+	execute unsafe "SELECT * FROM bp_chat_reports WHERE id = '%{_reportId}%'" in {conn_BPDATA} and store the result in {_report::*}
+	if {_report::id::*} is set:
+		if {_p} has permission "sk.decide.reports":
+			execute unsafe "UPDATE bp_chat_reports SET status = '1', reviewer = '%{_p}%', decision = '%{_decision}%' WHERE id = '%{_reportId}%'" in {conn_BPDATA}
+			if {_decision} is 1:
+				punishPlayer({_report::sender::1} parsed as player)
+				send "{@tag} &cRapor No: &f%{_reportId}% &aincelemesi tamamlandı. &eCeza uygulandı." to {_p}
+				openReportsViewer({_p}, 1)
+			else if {_decision} is 0:
+				send "{@tag} &cRapor No: &f%{_reportId}% &aincelemesi tamamlandı. &eCeza uygulan&nma&edı." to {_p}
+				openReportsViewer({_p}, 1)
+		else:
+			execute unsafe "UPDATE bp_chat_reports SET status = '1', reviewer = '%{_p}%', is_punishable = '%{_decision}%' WHERE id = '%{_reportId}%'" in {conn_BPDATA}
+			send "{@tag} &cRapor No: &f%{_reportId}% &aincelemesi tamamlandı." to {_p}
+			openReportsViewer({_p}, 1)
+
+	else:
+		send "{@tag} &cBu rapor silinmiş ya da başkası tarafından işlenmiş olabilir." to {_p} 
+		
+
+
+
+
+
+
+
+
+
+
+

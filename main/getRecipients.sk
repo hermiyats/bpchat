@@ -1,0 +1,19 @@
+function getRecipients(p:player) :: objects:
+
+	#Can player bypass all ignores?
+	if {_p} has permission "sk.chat.bypass.ignore.prohibited":
+		return (all players)
+
+	else:
+		loop all players:
+			#Can not the target player be ignored?
+			if loop-player has permission "sk.chat.ignore.prohibited":
+				add loop-player to {_recipients::*}
+			#Yes the target player can be ignored
+			else:
+				#Check if target player is not in ignored list
+				{ignore::%{_p}%::chat::*} does not contain loop-player
+				add loop-player to {_recipients::*} 
+
+		return {_recipients::*}
+		

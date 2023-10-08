@@ -1,0 +1,83 @@
+options:
+	tag: &7[&6B&eP&7] #Tag for skript messages
+	prefix: false
+	#Three options:
+		#false: no prefix
+		#text: for prefixes in text format
+		#itemsadder: for prefixes in image format
+
+#Purge 10min Old Chat History
+every 1 minute:
+	execute "DELETE FROM bp_chat_history WHERE time < (NOW() - INTERVAL 10 MINUTE)" in {conn_BPDATA}
+	
+on chat:
+	getLandChatMode(player) is false #Fix land chat
+	cancel event
+	handleChat(player, message)
+
+
+function handleChat(p:player, message:string):
+
+	#Create a hash for the message
+	set {_messageHash} to genKey(16)
+
+	#Chat Format
+	set {_seperator} to text component from "<##534F58>|"
+	set {_pointer} to text component from "<##534F58>»"
+	set {_whiteSpaceS} to text component from " "
+	set {_whiteSpaceM} to text component from "  "
+	set {_whiteSpaceL} to text component from "   "
+
+	#Luckperms Chat Format
+	set {_prefix} to placeholder "luckperms_prefix" from {_p}
+	set {_prefix} to placeholder {_prefix} #fix itemsadder tags
+	set {_nameColor} to placeholder "luckperms_meta_username-color" from {_p}
+	set {_displayName} to {_p}'s displayname
+	set {_messageColor} to placeholder "luckperms_meta_message-color" from {_p}
+
+	#Fix <none> for colors if Luckperms is not installed
+	set {_prefix} to "" if {_prefix} is not set
+	set {_nameColor} to "" if {_nameColor} is not set
+	set {_messageColor} to "" if {_messageColor} is not set
+
+	#Fix hexcode colors (because script doesn't understand #ffffff type.)
+	set {_prefix} to text component from hexSanitise({_prefix})
+	set {_coloredName} to text component from "%hexSanitise({_nameColor})%%{_displayName}%"
+
+	#Decorate Message
+	set {_decoratedMessageComponents::*} to messageDecorator({_p}, {_message}, {_messageColor})
+
+	# Should we add reportIcon to message and log the message to the DB or it's an administrator?
+	if {_p} does not have permission "sk.chat.notlog": 
+	#if {_p} has permission "lh.mod.chat.bypass.log": #for test purposes you can alter to this.
+		#Report Icon
+		set {_reportIcon} to text component from "(!)"
+		set color format of {_reportIcon} to rgb(245, 145, 130)
+		set hover event of {_reportIcon} to a new hover event showing "&cBu mesajı şikayet etmek için tıkla."
+		set click event of {_reportIcon} to a new click event to run command "/report message %{_messageHash}%"
+	#	add {_reportIcon} to {_decoratedMessageComponents::*} Use this to add the icon at the end of the message!
+	#	but then you have to remove {_reportIcon} in the section below where the {prefix} check is made
+	
+	# 	Report Log --- Make sure your DB is connected.
+		execute unsafe "INSERT INTO bp_chat_history (sender, message, hash) VALUES ('%{_p}%','%{_message}%', '%{_messageHash}%')" in {conn_BPDATA}
+
+	
+
+
+	#Check if player can send the message
+	if canTalk({_p}, {_message}) is true:
+
+		#Check the prefix option
+		if "{@prefix}" is "false":
+			set {_readyToSend} to merge components {_reportIcon}, {_whiteSpaceS}, {_coloredName}, {_whiteSpaceS}, {_pointer}, {_whiteSpaceS} and {_decoratedMessageComponents::*}
+		
+		else if "{@prefix}" is "text":
+			set {_readyToSend} to merge components {_reportIcon}, {_whiteSpaceS}, {_prefix}, {_whiteSpaceS}, {_seperator}, {_whiteSpaceS}, {_coloredName}, {_whiteSpaceS}, {_pointer}, {_whiteSpaceS} and {_decoratedMessageComponents::*}
+		
+		else if "{@prefix}" is "itemsadder":
+			set {_readyToSend} to merge components {_reportIcon}, {_whiteSpaceS}, {_prefix}, {_whiteSpaceS}, {_coloredName}, {_whiteSpaceS}, {_pointer}, {_whiteSpaceS} and {_decoratedMessageComponents::*}
+
+		send component {_readyToSend} to getRecipients({_p})
+		send formatted "&7%{_displayName}%: %uncolored {_message}%" to console
+
+

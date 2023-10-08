@@ -1,0 +1,12 @@
+function getMentions(message:string) :: objects:
+
+	set {_messageSplit::*} to {_message} split by " "
+	loop {_messageSplit::*}:
+
+		loop-value matches "^@+[\w]*"
+		set {_mention} to loop-value
+		replace all "@" in {_mention} with ""
+		if ({_mention} parsed as offlineplayer) is online:
+			add {_mention} to {_mentions::*}
+
+	return {_mentions::*}

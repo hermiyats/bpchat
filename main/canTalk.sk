@@ -1,0 +1,42 @@
+function canTalk(p:player, message:string) :: boolean:
+	
+	#Is player OP?
+	if {_p} does not have permission "sk.chat.bypass.*":
+
+		#Is the player muted?
+		if indexes of {muteMap::*} contains {_p}'s uuid: 
+			send "&cSusturulmuşsun, sohbete yazamazsın." to {_p}
+			return false if {_p} does not have permission "sk.chat.bypass.mute"
+
+		#Is the closed?
+		if {-chat::status} is false: #chat::status false -> chat is closed
+			if {-chat::canTalk::*} doesn't contain {_p}: 
+				send "&eŞu an da sohbet &ckilitli&e. Sadece izin verilen kişiler konuşabilir." to {_p}
+				return false if {_p} does not have permission "sk.chat.bypass.closed"
+
+		#Does message contains swear words?
+		if isSwearOrAd({_message}) is true:
+			send "&cBu mesaj uygunsuz kelime içeriyor." to {_p}
+			return false
+
+		#Can mention that player?
+		if {_p} has permission "sk.chat.use.specials.metion":
+			set {_mentions::*} to getMentions({_message})
+			if size of {_mentions::*} > 0:
+				set {_mentions::*} to getMentions({_message})
+				loop {_mentions::*}:
+					#Is player trying to mention themself
+					if (loop-value parsed as player) is {_p}:
+						send "&cMesajınızda kendinizden bahsedemezsiniz." to {_p}
+						return false
+					else:
+						#Check if player can mention that player
+						(loop-value parsed as player) has permission "sk.chat.mention.prohibited" #Players with this perm can't be mentioned
+						{_p} doesn't have permission "sk.chat.bypass.mention.prohibited" #Players with this perm can bypass the previous perm.
+						send "&cMesajınızda &d%isimEki(loop-value, "den", 1)% &cbahsedemezsiniz." to {_p}
+						return false
+
+
+
+	return true
+

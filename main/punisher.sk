@@ -1,0 +1,46 @@
+options:
+    tag: &7[&6B&eP&7] #Tag for skript messages
+
+
+
+#----------------------- punish player regarding it's previous punishments -----------------------------
+
+
+#TO BE REWORKED AND IMPROVED
+
+function punishPlayer(p:player):
+	execute unsafe "SELECT * FROM bp_chat_reports WHERE sender = '%{_p}%' AND decision = '1'" in {conn_BPDATA} and store the result in {_playerPunishHistory::*}
+	set {_punishmentCount} to size of indexes of {_playerPunishHistory::id::*}
+	if {_punishmentCount} is 1:
+		mute(({_p}'s uuid), 1 minute, true)
+		send "{@tag} &c1 dakika boyunca susturuldun." to {_p}
+	else if {_punishmentCount} is 2:
+		mute(({_p}'s uuid), 10 minute, true)
+		send "{@tag} &c10 dakika boyunca susturuldun." to {_p}
+	else if {_punishmentCount} is 3:
+		mute(({_p}'s uuid), 1 hour, true)
+		send "{@tag} &c1 saat boyunca susturuldun." to {_p}
+	else if {_punishmentCount} is 4:
+		mute(({_p}'s uuid), 2 hours, true)
+		send "{@tag} &c2 saat boyunca susturuldun." to {_p}
+	else if {_punishmentCount} is 5:
+		mute(({_p}'s uuid), 6 hours, true)
+		send "{@tag} &c6 saat boyunca susturuldun." to {_p}
+	else if {_punishmentCount} is 6:
+		mute(({_p}'s uuid), 12 hours, true)
+		send "{@tag} &c12 saat boyunca susturuldun." to {_p}
+	else if {_punishmentCount} is 7:
+		mute(({_p}'s uuid), 1 day, true)
+		send "{@tag} &c1 gün boyunca susturuldun." to {_p}
+	else if {_punishmentCount} is 8:
+		mute(({_p}'s uuid), 3 days, true)
+		send "{@tag} &c3 gün boyunca susturuldun." to {_p}
+	else if {_punishmentCount} is 9:
+		mute(({_p}'s uuid), 7 days, true)
+		send "{@tag} &c7 gün boyunca susturuldun." to {_p}
+	else if {_punishmentCount} is 10:
+		mute(({_p}'s uuid), 14 days, true)
+		send "{@tag} &c14 gün boyunca susturuldun." to {_p}
+	else if {_punishmentCount} >= 11:
+		mute(({_p}'s uuid), 1 month, true)
+		send "{@tag} &c1 ay boyunca susturuldun." to {_p}

@@ -1,0 +1,53 @@
+options:
+    tag: &7[&6B&eP&7] #Tag for skript messages
+
+command /mute <offlineplayer> [<timespan>]:
+    trigger:
+        if arg-1 is set:
+            player has permission "sk.chat.mute"
+            if arg-2 is not set:
+                if mute((arg-1's uuid), {_dummy}, false) is false:
+                    send "{@tag} &cBu oyuncu zaten susturulmuş."
+                else:
+                    send "{@tag} &a%arg-1% başarıyla susturuldu."
+            if arg-2 is set:
+                if mute(arg-1's uuid, arg-2, false) is false:
+                    send "{@tag} &cBu oyuncu zaten susturulmuş."
+                else:
+                    send "{@tag} &a%arg-1% başarıyla susturuldu."
+
+command /unmute <offlineplayer>:
+    trigger:
+        if arg-1 is set:
+            player has permission "sk.chat.mute"
+            if unmute(arg-1's uuid) is false:
+                send "{@tag} &cBu oyuncu susturulmamış."
+            else:
+                send "{@tag} &aOyuncunun susturulması kaldırıldı."
+
+
+#Special thanks to mr_darth I used his mute algorithm.
+on skript load:
+    loop {muteMap::*}:
+        scheduleUnmute(loop-index) if loop-value is not -1
+
+function scheduleUnmute(id: string):
+    stop if {muteMap::%{_id}%} is -1
+    set {_timePassed} to {muteMap::%{_id}%} - (unix timestamp of now)
+    if {_timePassed} > 0:
+        wait "%{_timePassed}% seconds" parsed as timespan
+    unmute({_id})
+
+
+function unmute(id: string) :: boolean:
+    return false if {muteMap::%{_id}%} is not set
+    delete {muteMap::%{_id}%}
+    return true
+
+
+function mute(id: string, time: timespan, override: boolean = true) :: boolean:
+    if {muteMap::%{_id}%} is set:
+        return false if {_override} is not true
+    set {muteMap::%{_id}%} to (unix timestamp of ({_time} from now)) if {_time} is set, else -1
+    scheduleUnmute({_id})
+    return true

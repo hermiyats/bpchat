@@ -1,0 +1,100 @@
+options:
+    tag: &7[&6B&eP&7] #Tag for skript messages
+
+command /sustur [<string>] [<string>]:
+	trigger:
+		if player has permission "sk.chat.ignore":
+			#Send help menu
+			if arg-1 is not set:
+				send "&6/sustur (mesaj | &6sohbet) <oyuncu> &b- &fSustur/Kaldır."
+				send "&6/sustur (mesaj | &6sohbet) liste &b- &fSusturulmuşlar listesi."
+			else if arg-1 is "mesaj":
+				if arg-2 is "liste":
+					send "{@tag} &eMesajlarda susturulan oyuncular:" to player
+					send {ignore::%player%::message::*}
+				else:
+					if {ignore::%player%::message::*} contains arg-2:
+						remove arg-2 from {ignore::%player%::message::*}
+						send "{@tag} &d%arg-2% &eisimli oyuncunun mesaj susturması &akaldırıldı&e." to player
+					else:
+						if ((arg-2) parsed as player) is player:
+							send "{@tag} &cKendini susturamazsın!"
+						else:
+							add arg-2 to {ignore::%player%::message::*}
+							send "{@tag} &d%arg-2% &eisimli oyuncu mesajlarda &csusturuldu&e." to player							
+			#Same thing but for chat
+			else if arg-1 is "sohbet":
+				if arg-2 is "liste":
+					send "{@tag} &eMesajlarda susturulan oyuncular:"
+					send {ignore::%player%::chat::*}
+				else:
+					if {ignore::%player%::chat::*} contains arg-2:
+						remove arg-2 from {ignore::%player%::chat::*}
+						send "{@tag} &d%arg-2% &eisimli oyuncunun sohbet susturması &akaldırıldı&e." to player
+					else:
+						if ((arg-2) parsed as player) is player:
+							send "{@tag} &cKendini susturamazsın!"
+						else:					
+							add arg-2 to {ignore::%player%::chat::*}
+							send "{@tag} &d%arg-2% &eisimli oyuncu sohbette &csusturuldu&e." to player
+			#Same thing but for mention
+			else if arg-1 is "bahsetme":
+				if arg-2 is "liste":
+					send "{@tag} &eMesajlarda susturulan oyuncular:"
+					send {ignore::%player%::mention::*}
+				else:
+					if {ignore::%player%::mention::*} contains arg-2:
+						remove arg-2 from {ignore::%player%::mention::*}
+						send "{@tag} &d%arg-2% &eisimli oyuncunun bahsetme susturması &akaldırıldı&e." to player
+					else:
+						if ((arg-2) parsed as player) is player:
+							send "{@tag} &cKendini susturamazsın!"
+						else:					
+							add arg-2 to {ignore::%player%::mention::*}
+							send "{@tag} &d%arg-2% &eisimli oyuncunun bahsetmesi &csusturuldu&e." to player
+		else:
+			send "{@tag} &cBunu yapmak için yetkiniz yok."
+
+
+command /chat [<string>] [<player>] [<text>]:
+	permission: sk.admin
+	trigger:
+
+		if arg-1 is "open":
+			broadcast "{@tag} &aSohbet açıldı."
+			set {-chat::status} to true
+			delete {-chat::canTalk::*}
+
+		else if arg-1 is "close":
+			set {-chat::status} to false
+			broadcast "{@tag} &cSohbet kilitlendi."
+			delete {-chat::canTalk::*}
+
+		else if arg-1 is "add":
+			{-chat::status} is false
+			add arg-2 to {-chat::canTalk::*}
+			send "{@tag} &aYetkili size sohbette konuşma izni verdi." to arg-2
+			send "{@tag} &a%arg-2% &eoyuncusunun konuşmasına izin verildi." to all players where [input is not arg-2]
+
+		else if arg-1 is "remove":
+			{-chat::status} is false
+			remove arg-2 from {-chat::canTalk::*}
+			send "{@tag} &cYetkili sizden sohbette konuşma iznini aldı." to arg-2
+			send "{@tag} &c%arg-2% &eoyuncusundan konuşma izin alındı." to all players where [input is not arg-2]
+
+		else if arg-1 is "clear":
+			loop all players:
+				if loop-player doesn't have permission "sk.admin":
+					loop 200 times:
+						send "" to loop-player
+
+			broadcast "{@tag} &aSohbet temizlendi."
+
+		else if arg-1 is "sclear":
+			loop 200 times:
+				send ""
+
+		else if arg-1 is "forcetalk":
+			arg-2 is set
+			arg-3 is set
+			handleChat(arg-2, arg-3)

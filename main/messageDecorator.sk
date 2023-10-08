@@ -1,0 +1,49 @@
+function messageDecorator(p:player, message:string, messageColor:string) :: objects:
+
+	set {_messageSplit::*} to {_message} split by " "
+
+	#Can use color codes?
+	if {_p} has permission "sk.chat.colorise":
+		set {_postSpecial} to text component from "%hexSanitise({_messageColor})%%hexSanitise({_message})%"
+	else:
+		set {_postSpecial} to text component from "%hexSanitise({_messageColor})%%uncolored {_message}%"
+
+	if {_p} does not have permission "sk.chat.use.specials":
+		return {_postSpecial}
+
+	loop {_messageSplit::*}:
+		delete {_specialType}
+
+		if loop-value matches "^@+[\w]*":
+			{_p} has permission "sk.chat.use.specials.metion"
+			set {_specialType} to "mention"
+		else if loop-value is "[eşya]":
+			{_p} has permission "sk.chat.use.specials.item"
+			set {_specialType} to "item"
+
+		if {_specialType} is set:
+			set {_messageSplitBySpecial::*} to {_postSpecial} split at loop-value
+			set {_preSpecial} to text component from "%hexSanitise({_messageColor})%%hexSanitise({_messageSplitBySpecial::1})%"
+			set {_special} to text component from loop-value
+			set {_postSpecial} to text component from "%hexSanitise({_messageColor})%%hexSanitise({_messageSplitBySpecial::2})%"
+
+			if {_specialType} is "mention":
+				set {_player} to {_special}
+				replace all "@" in {_player} with ""
+
+				if ({_player} parsed as offlineplayer) is online:
+					set hover event of {_special} to a new hover event showing "&aBahsetme"
+					set color format of {_special} to light blue
+				else:
+					set {_special} to text component from "%hexSanitise({_messageColor})%%hexSanitise(loop-value)%"
+
+			else if {_specialType} is "item":
+				set hover event of {_special} to a new hover event showing {_p}'s tool
+				set color format of {_special} to red
+
+			add {_preSpecial} to {_result::*}
+			add {_special} to {_result::*}
+
+	add {_postSpecial} to {_result::*}
+
+	return {_result::*}
