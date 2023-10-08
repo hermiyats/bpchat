@@ -6,12 +6,12 @@ options:
 	port: 3306
 	dbname: bpdata
 	user: root
-	#pass: 123456 Type your dbpass
+	pass: 123456
 
 	tag: &7[&6B&eP&7] #Tag for skript messages
 
 
 #DB Connection Handler
 on load:
-	#set {conn_BPDATA} to the database "mysql://{@host}:{@port}/{@dbname}?user={@user}&password={@pass}&useSSL=false"
-	set {conn_BPDATA} to the database "mysql://{@host}:{@port}/{@dbname}?user={@user}&password=&useSSL=false"
+	set {conn_BPDATA} to the database "mysql://{@host}:{@port}/{@dbname}?user={@user}&password={@pass}&useSSL=false"
+	#set {conn_BPDATA} to the database "mysql://{@host}:{@port}/{@dbname}?user={@user}&password=&useSSL=false"
