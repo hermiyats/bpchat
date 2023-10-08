@@ -1,0 +1,22 @@
+function hexSanitise(input:string) :: string:
+	set {_hex::*} to {_input} split at ""
+	set {_hexResult} to "None"
+	set {_return} to {_input}
+	loop {_hex::*}:
+		if loop-value is "&":
+			set {_isHex} to loop-value
+		else if loop-value is "##":
+			if {_isHex} is "&":
+				set {_isHex} to "&##"
+		else:
+			if {_isHex} is "&##":
+				if size of {_hexBody::*} < 6:
+					add loop-value to {_hexBody::*} 
+				else:
+					set {_hexResult} to ""
+					loop {_hexBody::*}:
+						set {_hexResult} to "%{_hexResult}%%loop-value-2%"
+					delete {_hexBody::*}
+					delete {_isHex}
+					replace all "&##%{_hexResult}%" with "<##%{_hexResult}%>" in {_return}
+	return {_return}

@@ -1,0 +1,16 @@
+function genKey(l: number) :: text:
+    set {_abc} to "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuYvVwWxXyYzZ"
+    loop {_l} times:
+        set {_t} to random integer between 1 and 52
+        set {_n} to random integer between 0 and 9
+        if {_r} is set:
+            chance of 50%:
+                set {_r} to "%{_r}%%subtext of {_abc} from characters {_t} to {_t}%"
+            else:
+                set {_r} to "%{_r}%%{_n}%"
+        else:
+            chance of 50%:
+                set {_r} to subtext of {_abc} from characters {_t} to {_t}
+            else:
+                set {_r} to {_n}
+    return {_r}

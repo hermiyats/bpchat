@@ -1,0 +1,115 @@
+function isimEki(isim: string, ek: string, type: number) :: string:
+    set {_sertsessizler::*} to ("ç", "f", "h", "k", "p", "s", "ş", and "t") # de/te, dan/tan ayrımı için
+    set {_tempisim} to {_isim} # isim ile işlem yapacağımız için bir kopyasını aldım
+    set {_sonharf} to ((last character of {_tempisim}) in lowercase)
+    set {_tempisim} to {_tempisim}.replace("ı", "♪") # Skript ı ve i leri aynı olarak gördüğü 
+    # için birbirinden ayırmak için farklı bir karakter kullandım
+    set {_tempisim} to {_tempisim}.replace("ö", "`") # ö ve ü son sesliler olarak hep aynı sonucu verdiği için ikisini birleştirdim
+    set {_tempisim} to {_tempisim}.replace("ü", "`")
+    loop ("a", "e", "i", "o", "u", "♪" and "`"):
+        set {_lastindex} to (last index of loop-value in {_tempisim})
+        if {_lastindex} >= 0:
+            set {_index::%loop-value%} to {_lastindex}
+    set {_sonsesli} to (last element of (indexes of {_index::*} in ascending order))
+    if {_ek} is "in":
+        if {_sonharf} is "a" or "♪":
+            set {_eki} to "nın"
+        else if {_sonharf} is "e" or "i":
+            set {_eki} to "nin"
+        else if {_sonharf} is "u" or "o":
+            set {_eki} to "nun"
+        else if {_sonharf} is "ü" or "ö":
+            set {_eki} to "nün"
+        else if {_sonsesli} is "a" or "♪":
+            set {_eki} to "ın"
+        else if {_sonsesli} is "e" or "i":
+            set {_eki} to "in"
+        else if {_sonsesli} is "u" or "o":
+            set {_eki} to "un"
+        else if {_sonsesli} is "`":
+            set {_eki} to "ün"
+        else:
+            set {_eki} to "ın"
+    else if {_ek} is "e":
+        if {_sonharf} is "a", "♪", "u" or "o":
+            set {_eki} to "ya"
+        else if {_sonharf} is "e", "i", "ü" or "ö":
+            set {_eki} to "ye"
+        else if {_sonsesli} is "a", "♪", "u" or "o":
+            set {_eki} to "a"
+        else if {_sonsesli} is "e", "i" or "`":
+            set {_eki} to "e"
+        else:
+            set {_eki} to "a"
+    else if {_ek} is "i":
+        if {_sonharf} is "a" or "♪":
+            set {_eki} to "yı"
+        else if {_sonharf} is "e" or "i":
+            set {_eki} to "yi"
+        else if {_sonharf} is "u" or "o":
+            set {_eki} to "yu"
+        else if {_sonharf} is "ü" or "ö":
+            set {_eki} to "yü"
+        else if {_sonsesli} is "a" or "♪":
+            set {_eki} to "ı"
+        else if {_sonsesli} is "e" or "i":
+            set {_eki} to "i"
+        else if {_sonsesli} is "u" or "o":
+            set {_eki} to "u"
+        else if {_sonsesli} is "`":
+            set {_eki} to "ü"
+        else:
+            set {_eki} to "i"
+    else if {_ek} is "de":
+        if {_sonharf} is "♪", "u" or "o":
+            set {_eki} to "da"
+        else if {_sonharf} is "i", "ü" or "ö":
+            set {_eki} to "de"
+        else if {_sonsesli} is "a", "♪", "u" or "o":
+            if {_sertsessizler::*} contains {_sonharf}:
+                set {_eki} to "ta"
+            else:
+                set {_eki} to "da"
+        else if {_sonsesli} is "e", "i" or "`":
+            if {_sertsessizler::*} contains {_sonharf}:
+                set {_eki} to "te"
+            else:
+                set {_eki} to "de"
+        else if {_sertsessizler::*} contains {_sonharf}:
+            set {_eki} to "ta"
+        else:
+            set {_eki} to "da"     
+    else if {_ek} is "den":
+        if {_sonharf} is "a", "♪", "u" or "o":
+            set {_eki} to "dan"
+        else if {_sonharf} is "e", "i", "ü" or "ö":
+            set {_eki} to "den"
+        else if {_sonsesli} is "a", "♪", "u" or "o":
+            if {_sertsessizler::*} contains {_sonharf}:
+                set {_eki} to "tan"
+            else:
+                set {_eki} to "dan"
+        else if {_sonsesli} is "e", "i" or "`":
+            if {_sertsessizler::*} contains {_sonharf}:
+                set {_eki} to "ten"
+            else:
+                set {_eki} to "den"
+        else if {_sertsessizler::*} contains {_sonharf}:
+            set {_eki} to "tan"
+        else:
+            set {_eki} to "dan"   
+    else if {_ek} is "ile":
+        if {_sonharf} is "a", "♪", "u" or "o":
+            set {_eki} to "yla"
+        else if {_sonharf} is "e", "i", "ü" or "ö":
+            set {_eki} to "yle"
+        else if {_sonsesli} is "a", "♪", "u" or "o":
+            set {_eki} to "la"
+        else if {_sonsesli} is "e", "i" or "`":
+            set {_eki} to "le"
+        else:
+            set {_eki} to "la"
+    if {_type} is 1:
+        return "%{_isim}%'%{_eki}%"
+    else:
+        return "%{_isim}%%{_eki}%"

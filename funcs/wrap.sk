@@ -1,0 +1,16 @@
+#Satırlara Bölme
+
+function wrap(text: text, width: integer = 30, colorCode: string) :: texts:
+    return "%{_colorCode}%%{_text}%" if (length of {_text}) <= {_width}
+    set {_words::*} to split {_text} at " "
+    set {_lines} to ""
+    set {_trimmed} to ""
+    loop {_words::*}:
+        if (length of {_trimmed}) <= {_width}:
+            set {_trimmed} to "%{_trimmed}%%loop-value% "
+        else:
+            set {_lines} to "%{_lines}%%{_trimmed}%%line break%%{_colorCode}%"
+            set {_trimmed} to "%loop-value% "
+    if (length of {_trimmed}) > 0:
+        set {_lines} to "%{_colorCode}%%{_lines}%%{_trimmed}%"
+    return "%{_colorCode}%%{_lines}%%line break%"
